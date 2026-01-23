@@ -7,7 +7,18 @@
       "WebFetch(domain:deepwiki.com)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:portkey.ai)",
-      "WebFetch(domain:www.zstack-cloud.com)"
+      "WebFetch(domain:www.zstack-cloud.com)",
+      "Bash(wc:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet nuget:*)",
+      "WebFetch(domain:modelcontextprotocol.github.io)",
+      "Bash(tree:*)",
+      "mcp__wpf-mcp__wpf_launch_application"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "wpf-mcp"
+  ]
 }

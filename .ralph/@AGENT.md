@@ -1,49 +1,149 @@
-# Agent Build Instructions
+# Agent Build Instructions - WPF-MCP Server
+
+## Project Overview
+
+This is a Model Context Protocol (MCP) server for automating WPF applications. It uses FlaUI and Microsoft UI Automation to enable AI agents to interact with WPF desktop applications.
+
+## Prerequisites
+
+- .NET 8.0 SDK or later
+- Windows operating system (required for UI Automation)
+- Visual Studio 2022 or Rider (optional, for IDE development)
 
 ## Project Setup
+
 ```bash
-# Install dependencies (example for Node.js project)
-npm install
+# Navigate to project directory
+cd /mnt/c/Users/Riccardo/Documents/Coding/mcp/WPF-mcp
 
-# Or for Python project
-pip install -r requirements.txt
+# Restore NuGet packages
+dotnet restore
 
-# Or for Rust project  
-cargo build
+# Build the solution
+dotnet build
 ```
 
 ## Running Tests
+
 ```bash
-# Node.js
-npm test
+# Run all tests
+dotnet test
 
-# Python
-pytest
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
 
-# Rust
-cargo test
+# Run specific test project
+dotnet test tests/WpfMcp.Server.Tests/WpfMcp.Server.Tests.csproj
 ```
 
 ## Build Commands
+
 ```bash
-# Production build
-npm run build
-# or
-cargo build --release
+# Debug build
+dotnet build
+
+# Release build
+dotnet build -c Release
+
+# Publish for distribution
+dotnet publish src/WpfMcp.Server/WpfMcp.Server.csproj -c Release -r win-x64 --self-contained false
 ```
 
-## Development Server
+## Running the MCP Server
+
 ```bash
-# Start development server
-npm run dev
-# or
-cargo run
+# Run the server (stdio transport)
+dotnet run --project src/WpfMcp.Server/WpfMcp.Server.csproj
 ```
+
+## MCP Client Configuration
+
+To use with Claude Desktop or other MCP clients, add to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "wpf-mcp": {
+      "command": "dotnet",
+      "args": ["run", "--project", "C:/path/to/WPF-mcp/src/WpfMcp.Server/WpfMcp.Server.csproj"]
+    }
+  }
+}
+```
+
+Or with a published executable:
+
+```json
+{
+  "mcpServers": {
+    "wpf-mcp": {
+      "command": "C:/path/to/WPF-mcp/publish/WpfMcp.Server.exe"
+    }
+  }
+}
+```
+
+## Key Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| ModelContextProtocol | 0.2.0-preview.1 | MCP server framework |
+| FlaUI.Core | 5.0.0 | UI Automation abstraction |
+| FlaUI.UIA3 | 5.0.0 | UIA3 implementation |
+| Microsoft.Extensions.Hosting | 8.0.0 | Host builder and DI |
+
+## Available MCP Tools
+
+### Application Management
+- `wpf_launch_application` - Launch a WPF application
+- `wpf_attach_application` - Attach to a running application
+- `wpf_close_application` - Close the attached application
+
+### Element Discovery
+- `wpf_snapshot` - Get accessibility tree snapshot
+- `wpf_find_element` - Find elements by criteria
+- `wpf_get_element_properties` - Get element details
+
+### Interaction
+- `wpf_click` - Click elements
+- `wpf_type` - Type text
+- `wpf_set_value` - Set value directly
+- `wpf_toggle` - Toggle checkboxes
+- `wpf_select` - Select items in lists
+- `wpf_expand_collapse` - Expand/collapse tree nodes
+- `wpf_press_key` - Send keyboard input
+
+### Navigation
+- `wpf_scroll` - Scroll within containers
+- `wpf_scroll_into_view` - Scroll element into view
+- `wpf_focus` - Set keyboard focus
+
+### Window Management
+- `wpf_list_windows` - List application windows
+- `wpf_switch_window` - Switch to a window
+- `wpf_window_action` - Minimize/maximize/close windows
+
+### Utilities
+- `wpf_take_screenshot` - Capture screenshots
+- `wpf_wait_for` - Wait for conditions
 
 ## Key Learnings
-- Update this section when you learn new build optimizations
-- Document any gotchas or special setup requirements
-- Keep track of the fastest test/build cycle
+
+### Element References
+- Element refs (e.g., `e1`, `e2`) are only valid within a snapshot context
+- Call `wpf_snapshot` to get fresh references after UI changes
+- The `element` parameter in tools is for audit/logging only; `ref` is the actual identifier
+
+### Best Practices
+- Always call `wpf_snapshot` before interacting with elements
+- Use `wpf_wait_for` to wait for elements to be ready
+- Prefer `wpf_set_value` over `wpf_type` for faster input when ValuePattern is supported
+- Check `wpf_get_element_properties` to see supported patterns
+
+### Known Limitations
+- Only works on Windows (UI Automation is Windows-specific)
+- Requires application to have proper AutomationIds for reliable automation
+- Some custom controls may not expose proper automation peers
 
 ## Feature Development Quality Standards
 
@@ -57,15 +157,6 @@ cargo run
   - Unit tests for all business logic and services
   - Integration tests for API endpoints or main functionality
   - End-to-end tests for critical user workflows
-- **Coverage Validation**: Run coverage reports before marking features complete:
-  ```bash
-  # Examples by language/framework
-  npm run test:coverage
-  pytest --cov=src tests/ --cov-report=term-missing
-  cargo tarpaulin --out Html
-  ```
-- **Test Quality**: Tests must validate behavior, not just achieve coverage metrics
-- **Test Documentation**: Complex test scenarios must include comments explaining the test strategy
 
 ### Git Workflow Requirements
 
@@ -77,82 +168,15 @@ Before moving to the next feature, ALL changes must be:
    git commit -m "feat(module): descriptive message following conventional commits"
    ```
    - Use conventional commit format: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, etc.
-   - Include scope when applicable: `feat(api):`, `fix(ui):`, `test(auth):`
-   - Write descriptive messages that explain WHAT changed and WHY
 
-2. **Pushed to Remote Repository**:
-   ```bash
-   git push origin <branch-name>
-   ```
-   - Never leave completed features uncommitted
-   - Push regularly to maintain backup and enable collaboration
-   - Ensure CI/CD pipelines pass before considering feature complete
-
-3. **Branch Hygiene**:
-   - Work on feature branches, never directly on `main`
-   - Branch naming convention: `feature/<feature-name>`, `fix/<issue-name>`, `docs/<doc-update>`
-   - Create pull requests for all significant changes
-
-4. **Ralph Integration**:
-   - Update .ralph/@fix_plan.md with new tasks before starting work
-   - Mark items complete in .ralph/@fix_plan.md upon completion
-   - Update .ralph/PROMPT.md if development patterns change
-   - Test features work within Ralph's autonomous loop
-
-### Documentation Requirements
-
-**ALL implementation documentation MUST remain synchronized with the codebase**:
-
-1. **Code Documentation**:
-   - Language-appropriate documentation (JSDoc, docstrings, etc.)
-   - Update inline comments when implementation changes
-   - Remove outdated comments immediately
-
-2. **Implementation Documentation**:
-   - Update relevant sections in this AGENT.md file
-   - Keep build and test commands current
-   - Update configuration examples when defaults change
-   - Document breaking changes prominently
-
-3. **README Updates**:
-   - Keep feature lists current
-   - Update setup instructions when dependencies change
-   - Maintain accurate command examples
-   - Update version compatibility information
-
-4. **AGENT.md Maintenance**:
-   - Add new build patterns to relevant sections
-   - Update "Key Learnings" with new insights
-   - Keep command examples accurate and tested
-   - Document new testing patterns or quality gates
+2. **Pushed to Remote Repository** (when configured)
 
 ### Feature Completion Checklist
 
 Before marking ANY feature as complete, verify:
 
-- [ ] All tests pass with appropriate framework command
-- [ ] Code coverage meets 85% minimum threshold
-- [ ] Coverage report reviewed for meaningful test quality
-- [ ] Code formatted according to project standards
-- [ ] Type checking passes (if applicable)
+- [ ] All tests pass with `dotnet test`
+- [ ] Code compiles without errors with `dotnet build`
 - [ ] All changes committed with conventional commit messages
-- [ ] All commits pushed to remote repository
 - [ ] .ralph/@fix_plan.md task marked as complete
-- [ ] Implementation documentation updated
-- [ ] Inline code comments updated or added
 - [ ] .ralph/@AGENT.md updated (if new patterns introduced)
-- [ ] Breaking changes documented
-- [ ] Features tested within Ralph loop (if applicable)
-- [ ] CI/CD pipeline passes
-
-### Rationale
-
-These standards ensure:
-- **Quality**: High test coverage and pass rates prevent regressions
-- **Traceability**: Git commits and .ralph/@fix_plan.md provide clear history of changes
-- **Maintainability**: Current documentation reduces onboarding time and prevents knowledge loss
-- **Collaboration**: Pushed changes enable team visibility and code review
-- **Reliability**: Consistent quality gates maintain production stability
-- **Automation**: Ralph integration ensures continuous development practices
-
-**Enforcement**: AI agents should automatically apply these standards to all feature development tasks without requiring explicit instruction for each task.
