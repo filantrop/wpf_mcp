@@ -88,5 +88,5 @@ $RECYCLE.BIN/
 # Local Claude settings
 .claude/settings.local.json
 
-# Local MCP config (use global or per-user)
-# .mcp.json
+# Local MCP config (contains user-specific paths)
+.mcp.json

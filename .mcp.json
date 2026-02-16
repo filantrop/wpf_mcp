@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "wpf-mcp": {
-      "command": "C:/Users/ricca/Documents/coding/wpf_mcp/src/WpfMcp.Server/bin/Debug/net8.0-windows/win-x64/WpfMcp.Server.exe",
-      "args": []
-    }
-  }
-}

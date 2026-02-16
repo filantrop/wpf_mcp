@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "wpf-mcp": {
+      "command": "dotnet",
+      "args": ["run", "--project", "./src/WpfMcp.Server", "--configuration", "Release"]
+    }
+  }
+}

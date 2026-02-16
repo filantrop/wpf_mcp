@@ -21,9 +21,21 @@ A Model Context Protocol (MCP) server that enables AI agents to programmatically
 
 ### Installation
 
+#### Option 1: Install as Global Tool (Recommended)
+
+```bash
+# Install from NuGet (when published)
+dotnet tool install --global WpfMcp.Server
+
+# Or install from local build
+.\scripts\install-local.ps1
+```
+
+#### Option 2: Clone and Run
+
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/WPF-mcp.git
+git clone https://github.com/riccardo-larosa/WPF-mcp.git
 cd WPF-mcp
 
 # Build the project
@@ -33,9 +45,32 @@ dotnet build
 dotnet run --project src/WpfMcp.Server
 ```
 
-### Configure Claude Desktop
+### Configure MCP Client
 
-Add to your Claude Desktop configuration (`claude_desktop_config.json`):
+#### If installed as Global Tool:
+
+Add to your Claude Desktop/Claude Code configuration:
+
+```json
+{
+  "mcpServers": {
+    "wpf-mcp": {
+      "command": "wpf-mcp",
+      "args": []
+    }
+  }
+}
+```
+
+#### If running from source:
+
+For Claude Code, copy `.mcp.json.example` to `.mcp.json`:
+
+```bash
+cp .mcp.json.example .mcp.json
+```
+
+For Claude Desktop (`claude_desktop_config.json`):
 
 ```json
 {
@@ -43,18 +78,6 @@ Add to your Claude Desktop configuration (`claude_desktop_config.json`):
     "wpf-mcp": {
       "command": "dotnet",
       "args": ["run", "--project", "C:/path/to/WPF-mcp/src/WpfMcp.Server"]
-    }
-  }
-}
-```
-
-Or with the compiled executable:
-
-```json
-{
-  "mcpServers": {
-    "wpf-mcp": {
-      "command": "C:/path/to/WPF-mcp/src/WpfMcp.Server/bin/Debug/net8.0-windows/win-x64/WpfMcp.Server.exe"
     }
   }
 }
@@ -137,8 +160,8 @@ Once connected, you can ask Claude to interact with WPF applications:
 | Component | Technology |
 |-----------|------------|
 | Runtime | .NET 8.0 (Windows) |
-| MCP SDK | ModelContextProtocol 0.6.0 |
-| UI Automation | FlaUI (UIA3) |
+| MCP SDK | [ModelContextProtocol](https://github.com/modelcontextprotocol/csharp-sdk) |
+| UI Automation | [FlaUI](https://github.com/FlaUI/FlaUI) (UIA3) |
 | Transport | stdio (JSON-RPC 2.0) |
 
 ## Project Structure
@@ -180,12 +203,25 @@ For best results, WPF applications should:
 ```bash
 # Debug build
 dotnet build
+# or
+.\scripts\build.ps1
 
 # Release build
 dotnet build -c Release
+# or
+.\scripts\build.ps1 -Release
 
 # Run tests
 dotnet test
+
+# Development mode (auto-rebuild on changes)
+.\scripts\dev.ps1
+
+# Create NuGet package
+.\scripts\pack.ps1
+
+# Install locally as global tool
+.\scripts\install-local.ps1
 ```
 
 ## License

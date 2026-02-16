@@ -9,7 +9,24 @@
     <UseWPF>false</UseWPF>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
+
+    <!-- NuGet Global Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>wpf-mcp</ToolCommandName>
+    <PackageId>WpfMcp.Server</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Riccardo</Authors>
+    <Description>MCP server for WPF UI automation via FlaUI. Enables AI agents like Claude to programmatically interact with Windows desktop applications.</Description>
+    <PackageProjectUrl>https://github.com/riccardo-larosa/WPF-mcp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/riccardo-larosa/WPF-mcp</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>mcp;wpf;automation;flaui;claude;ai;desktop</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/"/>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FlaUI.Core" Version="5.0.0" />
