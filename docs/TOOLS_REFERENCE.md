@@ -121,6 +121,52 @@ Closes the currently attached WPF application.
 
 ---
 
+### wpf_set_background_mode
+
+Enables or disables background automation mode. When enabled, only UI Automation patterns are used (no mouse/keyboard simulation), allowing the target application to stay in background without stealing focus.
+
+**Parameters:**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `enabled` | bool | Yes | - | True to enable background mode |
+
+**Returns:**
+```json
+{
+  "success": true,
+  "data": {
+    "background_mode": true,
+    "description": "Background mode enabled: Only UI Automation patterns will be used"
+  }
+}
+```
+
+**Notes:**
+- In background mode, operations that require mouse/keyboard simulation will fail with `BACKGROUND_MODE_NOT_SUPPORTED`
+- Pattern-based operations (InvokePattern, ValuePattern, TogglePattern, SelectionItemPattern) work in background
+- Double-click, right-click, and keyboard shortcuts are NOT supported in background mode
+- Individual tools have a `background` parameter to override the global setting
+
+---
+
+### wpf_get_background_mode
+
+Gets the current background automation mode status.
+
+**Returns:**
+```json
+{
+  "success": true,
+  "data": {
+    "background_mode": false,
+    "description": "Background mode disabled: Mouse and keyboard simulation allowed"
+  }
+}
+```
+
+---
+
 ## Element Discovery
 
 ### wpf_snapshot
@@ -273,6 +319,7 @@ Clicks an element using InvokePattern or mouse simulation.
 | `element` | string | Yes | - | Human-readable description |
 | `ref` | string | Yes | - | Element reference from snapshot |
 | `click_type` | string | No | "single" | Type: single, double, or right |
+| `background` | bool | No | null | Override global background mode (true=patterns only) |
 
 **Returns:**
 ```json
@@ -310,6 +357,7 @@ Types text into a text input element.
 | `ref` | string | Yes | - | Element reference from snapshot |
 | `text` | string | Yes | - | Text to type (max 10,000 chars) |
 | `clear_first` | bool | No | true | Clear existing text first |
+| `background` | bool | No | null | Override global background mode (true=ValuePattern only) |
 
 **Returns:**
 ```json
@@ -407,6 +455,7 @@ Selects an item in a selection control (ComboBox, ListBox, etc.).
 | `ref` | string | Yes | - | Container element reference |
 | `item` | string | No* | null | Item text to select (partial match) |
 | `item_ref` | string | No* | null | Direct reference to item element |
+| `background` | bool | No | null | Override global background mode |
 
 *At least one of `item` or `item_ref` is required.
 
@@ -465,6 +514,9 @@ Sends keyboard key press to the focused element.
 |------|------|----------|---------|-------------|
 | `key` | string | Yes | - | Key to press (see supported keys) |
 | `ref` | string | No | null | Element to focus first |
+| `background` | bool | No | null | Override global background mode (keyboard never works in background) |
+
+**Note:** This tool always fails in background mode as keyboard simulation requires foreground focus.
 
 **Supported Keys:**
 - Letters: `A-Z`
@@ -753,6 +805,7 @@ Waits for an element condition to be met.
 | `FILE_NOT_FOUND` | Executable path invalid | Verify file path |
 | `LAUNCH_FAILED` | Process failed to start | Check permissions |
 | `INVALID_PARAMETER` | Bad input parameter | Check parameter values |
+| `BACKGROUND_MODE_NOT_SUPPORTED` | Operation requires foreground | Disable background mode or use pattern-based alternative |
 
 ---
 

@@ -18,6 +18,7 @@ public sealed class ApplicationManager : IApplicationManager, IDisposable
     private bool _disposed;
     private readonly ConcurrentQueue<ConsoleMessage> _consoleBuffer = new();
     private const int MaxBufferSize = 1000;
+    private bool _backgroundMode;
 
     public ApplicationManager()
     {
@@ -29,6 +30,13 @@ public sealed class ApplicationManager : IApplicationManager, IDisposable
     public bool IsAttached => _application != null && !HasApplicationCrashed();
 
     public Window? MainWindow => _mainWindow;
+
+    public bool BackgroundMode => _backgroundMode;
+
+    public void SetBackgroundMode(bool enabled)
+    {
+        _backgroundMode = enabled;
+    }
 
     public async Task<Window> LaunchApplicationAsync(string path, string[]? arguments = null, int timeoutMs = 30000)
     {

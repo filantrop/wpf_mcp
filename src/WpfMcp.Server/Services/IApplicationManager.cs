@@ -67,4 +67,16 @@ public interface IApplicationManager
     /// Gets captured console output from the launched application.
     /// </summary>
     IReadOnlyList<ConsoleMessage> GetConsoleOutput(string? level = null, int? limit = null);
+
+    /// <summary>
+    /// Whether background automation mode is enabled.
+    /// When true, only UI Automation patterns are used (no mouse/keyboard simulation).
+    /// </summary>
+    bool BackgroundMode { get; }
+
+    /// <summary>
+    /// Sets the background automation mode.
+    /// </summary>
+    /// <param name="enabled">True to enable background mode, false to disable.</param>
+    void SetBackgroundMode(bool enabled);
 }

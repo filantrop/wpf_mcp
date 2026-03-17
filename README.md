@@ -1,5 +1,9 @@
 # WPF-MCP Server
 
+[![CI](https://github.com/ricfanin/wpf_mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ricfanin/wpf_mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+
 A Model Context Protocol (MCP) server that enables AI agents to programmatically interact with Windows Presentation Foundation (WPF) applications. Think of it as **Playwright for WPF** - allowing Claude and other AI assistants to navigate, inspect, and interact with desktop applications.
 
 ## Features

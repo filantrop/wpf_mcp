@@ -10,6 +10,15 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
 
+    <!-- Code Quality -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- Suppress CA1707 (underscore in params) - required by MCP protocol schema -->
+    <!-- Suppress CA1000 (static members on generic types) - factory pattern for ToolResponse<T> -->
+    <NoWarn>$(NoWarn);CA1707;CA1000</NoWarn>
+
     <!-- NuGet Global Tool Configuration -->
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>wpf-mcp</ToolCommandName>

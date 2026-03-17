@@ -55,4 +55,7 @@ public static class ErrorCodes
 
     /// <summary>Window not found.</summary>
     public const string WindowNotFound = "WINDOW_NOT_FOUND";
+
+    /// <summary>Operation not supported in background automation mode.</summary>
+    public const string BackgroundModeNotSupported = "BACKGROUND_MODE_NOT_SUPPORTED";
 }

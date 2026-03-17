@@ -32,7 +32,8 @@ public sealed class WpfInteractionTools
     public string Click(
         [Description("Human-readable element description for permission")] string element,
         [Description("Element reference from snapshot")] string @ref,
-        [Description("Type of click to perform: single, double, or right")] string click_type = "single")
+        [Description("Type of click to perform: single, double, or right")] string click_type = "single",
+        [Description("Override global background mode setting")] bool? background = null)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -66,6 +67,12 @@ public sealed class WpfInteractionTools
             }
             else
             {
+                // Check background mode before mouse simulation
+                var bgValidation = ValidateBackgroundMode(background, element,
+                    click_type == "single" ? "click (InvokePattern not supported)" : $"{click_type} click",
+                    "InvokePattern");
+                if (bgValidation != null) return bgValidation;
+
                 // Fall back to mouse simulation
                 var point = automationElement.GetClickablePoint();
 
@@ -112,7 +119,8 @@ public sealed class WpfInteractionTools
         [Description("Human-readable element description")] string element,
         [Description("Element reference from snapshot")] string @ref,
         [Description("Text to type")] string text,
-        [Description("Clear existing text before typing")] bool clear_first = true)
+        [Description("Clear existing text before typing")] bool clear_first = true,
+        [Description("Override global background mode setting")] bool? background = null)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -149,35 +157,50 @@ public sealed class WpfInteractionTools
                     "This element cannot be modified"));
             }
 
-            // Focus the element
-            automationElement.Focus();
-            Wait.UntilInputIsProcessed();
+            // In background mode, use ValuePattern exclusively
+            bool isBackgroundMode = background ?? _applicationManager.BackgroundMode;
 
-            // Clear existing text if requested
-            if (clear_first)
+            if (isBackgroundMode)
             {
-                if (automationElement.Patterns.Value.IsSupported)
+                // Background mode: ValuePattern only, no focus or keyboard
+                if (!automationElement.Patterns.Value.IsSupported)
                 {
-                    automationElement.Patterns.Value.Pattern.SetValue(string.Empty);
+                    return JsonSerializer.Serialize(ToolResponse<object>.Fail(
+                        ErrorCodes.BackgroundModeNotSupported,
+                        $"Cannot type into '{element}' in background mode (ValuePattern not supported)",
+                        "Use wpf_set_background_mode(false) to disable background mode, or use wpf_set_value if available"));
                 }
-                else
-                {
-                    // Select all and delete
-                    Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
-                    Keyboard.Type(VirtualKeyShort.DELETE);
-                    Wait.UntilInputIsProcessed();
-                }
-            }
 
-            // Type the text
-            if (string.IsNullOrEmpty(text))
-            {
-                // Nothing to type, just cleared
+                automationElement.Patterns.Value.Pattern.SetValue(text);
             }
             else
             {
-                Keyboard.Type(text);
+                // Normal mode: Focus and keyboard simulation
+                automationElement.Focus();
                 Wait.UntilInputIsProcessed();
+
+                // Clear existing text if requested
+                if (clear_first)
+                {
+                    if (automationElement.Patterns.Value.IsSupported)
+                    {
+                        automationElement.Patterns.Value.Pattern.SetValue(string.Empty);
+                    }
+                    else
+                    {
+                        // Select all and delete
+                        Keyboard.TypeSimultaneously(VirtualKeyShort.CONTROL, VirtualKeyShort.KEY_A);
+                        Keyboard.Type(VirtualKeyShort.DELETE);
+                        Wait.UntilInputIsProcessed();
+                    }
+                }
+
+                // Type the text
+                if (!string.IsNullOrEmpty(text))
+                {
+                    Keyboard.Type(text);
+                    Wait.UntilInputIsProcessed();
+                }
             }
 
             return JsonSerializer.Serialize(ToolResponse<object>.Ok(new
@@ -339,7 +362,8 @@ public sealed class WpfInteractionTools
         [Description("Human-readable element description")] string element,
         [Description("Element reference for the container")] string @ref,
         [Description("Item text or reference to select")] string? item = null,
-        [Description("Direct reference to item element")] string? item_ref = null)
+        [Description("Direct reference to item element")] string? item_ref = null,
+        [Description("Override global background mode setting")] bool? background = null)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -402,6 +426,10 @@ public sealed class WpfInteractionTools
             }
             else
             {
+                // Check background mode before click fallback
+                var bgValidation = ValidateBackgroundMode(background, element, "select item", "SelectionItemPattern");
+                if (bgValidation != null) return bgValidation;
+
                 // Fall back to clicking the item
                 itemElement.Click();
             }
@@ -495,7 +523,8 @@ public sealed class WpfInteractionTools
     [McpServerTool(Name = "wpf_press_key"), Description("Sends keyboard key press to focused element")]
     public string PressKey(
         [Description("Key to press (e.g., 'Enter', 'Tab', 'Escape', 'F1', 'Ctrl+S')")] string key,
-        [Description("Optional element reference to focus first")] string? @ref = null)
+        [Description("Optional element reference to focus first")] string? @ref = null,
+        [Description("Override global background mode setting")] bool? background = null)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -508,6 +537,10 @@ public sealed class WpfInteractionTools
                     "No application is currently attached",
                     "Call wpf_launch_application or wpf_attach_application first"));
             }
+
+            // Check background mode (keyboard simulation never works in background)
+            var bgValidation = ValidateBackgroundMode(background, "keyboard", "press key", "N/A (keyboard requires foreground)");
+            if (bgValidation != null) return bgValidation;
 
             // Focus element if specified
             if (!string.IsNullOrEmpty(@ref))
@@ -678,5 +711,24 @@ public sealed class WpfInteractionTools
         }
 
         return keys.ToArray();
+    }
+
+    /// <summary>
+    /// Validates if an operation is allowed based on background mode settings.
+    /// </summary>
+    /// <param name="backgroundOverride">Per-tool override for background mode.</param>
+    /// <param name="element">Element description for error message.</param>
+    /// <param name="operation">Operation being attempted.</param>
+    /// <param name="requiredPattern">Pattern that would be required for background operation.</param>
+    /// <returns>Error response if in background mode, null otherwise.</returns>
+    private string? ValidateBackgroundMode(bool? backgroundOverride, string element, string operation, string requiredPattern)
+    {
+        bool isBackgroundMode = backgroundOverride ?? _applicationManager.BackgroundMode;
+        if (!isBackgroundMode) return null;
+
+        return JsonSerializer.Serialize(ToolResponse<object>.Fail(
+            ErrorCodes.BackgroundModeNotSupported,
+            $"Cannot perform '{operation}' on '{element}' in background mode",
+            $"Background mode requires {requiredPattern} support. Use wpf_set_background_mode(false) to disable, or use background=false parameter to override for this call."));
     }
 }

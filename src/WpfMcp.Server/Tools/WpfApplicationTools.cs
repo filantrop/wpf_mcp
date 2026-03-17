@@ -192,4 +192,41 @@ public sealed class WpfApplicationTools
                 "Try with force=true to force kill the application"));
         }
     }
+
+    [McpServerTool(Name = "wpf_set_background_mode"), Description("Enables or disables background automation mode (pattern-only, no mouse/keyboard simulation)")]
+    public string SetBackgroundMode(
+        [Description("True to enable background mode, false to disable")] bool enabled)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        _applicationManager.SetBackgroundMode(enabled);
+
+        return JsonSerializer.Serialize(ToolResponse<object>.Ok(new
+        {
+            background_mode = enabled,
+            description = enabled
+                ? "Background mode enabled: Only UI Automation patterns will be used (no mouse/keyboard simulation, window stays in background)"
+                : "Background mode disabled: Mouse and keyboard simulation allowed as fallback (may bring window to foreground)"
+        }, new ResponseMetadata
+        {
+            ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+        }));
+    }
+
+    [McpServerTool(Name = "wpf_get_background_mode"), Description("Gets the current background automation mode status")]
+    public string GetBackgroundMode()
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        return JsonSerializer.Serialize(ToolResponse<object>.Ok(new
+        {
+            background_mode = _applicationManager.BackgroundMode,
+            description = _applicationManager.BackgroundMode
+                ? "Background mode enabled: Only UI Automation patterns will be used"
+                : "Background mode disabled: Mouse and keyboard simulation allowed"
+        }, new ResponseMetadata
+        {
+            ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+        }));
+    }
 }
